@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>csapex_system_information</name>
+  <version>0.0.0</version>
+  <description>
+    The csapex_system_information allows to read system information such as cpu
+    and memory usage within csapex.
+  </description>
+
+  <maintainer email="richard.hanten@todo.todo">hanten</maintainer>
+  <author email="richard.hanten@uni-tuebingen.de">hanten</author>
+
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>csapex</run_depend>
+  <run_depend>csapex_core_plugins</run_depend>
+
+  <build_depend>csapex</build_depend>
+  <build_depend>csapex_core_plugins</build_depend>
+
+  <export>
+    <csapex plugin="${prefix}/plugins.xml" />
+  </export>
+</package>

@@ -1,0 +1,6 @@
+<library path="libcsapex_system_information">
+    <class type="csapex::SystemUsage" base_class_type="csapex::Node">
+      <description>Information about general memory usage and cpu load.</description>
+      <tags>system_info</tags>
+    </class>
+</library>
