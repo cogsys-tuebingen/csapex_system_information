@@ -6,10 +6,6 @@
 #include <fstream>
 #include <boost/regex.hpp>
 
-#include "sys/types.h"
-#include "sys/sysinfo.h"
-#include "sys/stat.h"
-
 namespace csapex {
 namespace system_information {
 
@@ -55,8 +51,14 @@ struct cpu_info {
 };
 
 struct ram_info {
-    double total_size;      // MB
-    double free;            // MB
+    std::size_t total;      // KB
+    std::size_t available;  // KB
+    std::size_t used;
+
+    inline static double toMB(std::size_t mem)
+    {
+        return mem / 1024.0;
+    }
 };
 
 class system_info {
@@ -64,10 +66,15 @@ public:
     typedef std::shared_ptr<system_info> Ptr;
     system_info() :
         stat_("/proc/stat"),
-        reg_cpu_("cpu[0-9]*")
+        meminfo_("/proc/meminfo"),
+        reg_cpu_("(cpu)([0-9]*)"),
+        reg_mem_total_("MemTotal.*"),
+        reg_mem_available_("MemAvailable.*")
     {
         if(!stat_.is_open())
             throw std::runtime_error("Cannot open '/proc/stat'!");
+        if(!meminfo_.is_open())
+            throw std::runtime_error("Cannot open '/proc/meminfo'!");
 
         updateCPUInfo();
     }
@@ -75,6 +82,7 @@ public:
     virtual ~system_info()
     {
         stat_.close();
+        meminfo_.close();
     }
 
     inline void getRAMInfo(ram_info &info)
@@ -107,7 +115,10 @@ private:
     std::map<std::string, cpu_info> cpu_prev_;
     ram_info                 ram_;
     std::ifstream            stat_;
+    std::ifstream            meminfo_;
     boost::regex             reg_cpu_;
+    boost::regex             reg_mem_total_;
+    boost::regex             reg_mem_available_;
 
     void updateCPUInfo()
     {
@@ -117,10 +128,30 @@ private:
 
     void updateRAMInfo()
     {
-        struct sysinfo si;
-        sysinfo(&si);
-        ram_.total_size = si.totalram / (1024.0 * 1024.0);
-        ram_.free       = si.freeram  / (1024.0 * 1024.0);
+        meminfo_.clear();
+        meminfo_.seekg(0, std::ios::beg);
+        std::string line;
+        std::size_t total_ram(0);
+        std::size_t available_ram(0);
+        while(std::getline(meminfo_, line)) {
+            std::vector<std::string> tokens;
+            split(line, ' ', tokens);
+            if(tokens.empty()) {
+                continue;
+            }
+
+            if(boost::regex_match(tokens[0], reg_mem_total_)) {
+                total_ram = as<std::size_t>(tokens[1]);
+            } else if(boost::regex_match(tokens[0], reg_mem_available_)) {
+                available_ram = as<std::size_t>(tokens[1]);
+            }
+            if(total_ram != 0 &&
+                    available_ram != 0)
+                break;
+        }
+        ram_.available = available_ram;
+        ram_.total = total_ram;
+        ram_.used = total_ram - available_ram;
     }
 
     void readCPUInfo(std::map<std::string, cpu_info> &infos)
@@ -131,7 +162,12 @@ private:
         while(std::getline(stat_, line)) {
             std::vector<std::string> tokens;
             split(line, ' ', tokens);
-            if(boost::regex_match(tokens.front(), reg_cpu_)) {
+            if(tokens.empty()) {
+                continue;
+            }
+
+            boost::smatch matches;
+            if(boost::regex_match(tokens.front(), matches, reg_cpu_)) {
                 cpu_info info;
                 info.user    = as<std::size_t>(tokens.at(1));
                 info.nice    = as<std::size_t>(tokens.at(2));
@@ -140,7 +176,15 @@ private:
                 info.iowait  = as<std::size_t>(tokens.at(5));
                 info.irq     = as<std::size_t>(tokens.at(6));
                 info.softirq = as<std::size_t>(tokens.at(7));
-                infos[tokens.at(0)] = info;
+                std::string id;
+                if(matches[2] == "") {
+                    id = "overall";
+                } else {
+                    id = matches[2];
+                    if(id.size() == 1)
+                        id = "0" + id;
+                }
+                infos["cpu_" + id] = info;
             }
         }
     }

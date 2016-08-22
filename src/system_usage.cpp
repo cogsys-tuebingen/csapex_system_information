@@ -67,7 +67,8 @@ void SystemUsage::tick()
             cpu_loads_.at(load.first)->setProgress(load.second * 100.0, 100.0);
         }
 
-        ram_usage_->setProgress(ram_info.total_size - ram_info.free, ram_info.total_size);
+        ram_usage_->setProgress(system_information::ram_info::toMB(ram_info.used),
+                                system_information::ram_info::toMB(ram_info.total));
         last_update_ = clock::now();
     }
 }
