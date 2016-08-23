@@ -7,6 +7,7 @@
 #include <csapex/signal/event.h>
 #include <csapex/utility/register_apex_plugin.h>
 #include <csapex/param/parameter_factory.h>
+#include <iomanip>
 
 using namespace csapex;
 using namespace csapex::connection_types;
@@ -41,14 +42,26 @@ void SystemUsage::setupParameters(Parameterizable &parameters)
         cpu_loads_.insert(std::make_pair(id, o));
     }
 
-    param::Parameter::Ptr p = param::ParameterFactory::declareOutputProgress("mem",
+    param::Parameter::Ptr p = param::ParameterFactory::declareOutputProgress("RAM usage",
                                                                              param::ParameterDescription("memory usage"));
     ram_usage_ = std::dynamic_pointer_cast<param::OutputProgressParameter>(p);
     parameters.addParameter(ram_usage_);
 
+    system_information::ram_info ram_info;
+    system_info_->getRAMInfo(ram_info);
+    std::stringstream mem_info;
+    mem_info << "RAM size: ";
+    mem_info << std::setprecision(6) << system_information::ram_info::toMB(ram_info.total);
+    mem_info << " [MB]";
+    mem_info << std::endl;
+    parameters.addParameter(param::ParameterFactory::declareOutputText("RAM size"));
+    parameters.setParameter<std::string>("RAM size", mem_info.str());
+
     parameters.addParameter(param::ParameterFactory::declareRange("update interval",
                                                                    0.01, 10.0, 0.5, 0.01),
                             update_interval_);
+
+
 }
 
 void SystemUsage::process()
@@ -62,6 +75,7 @@ void SystemUsage::tick()
         system_info_->getCPUUsage(loads);
         system_information::ram_info ram_info;
         system_info_->getRAMInfo(ram_info);
+
 
         for(auto &load : loads) {
             cpu_loads_.at(load.first)->setProgress(load.second * 100.0, 100.0);

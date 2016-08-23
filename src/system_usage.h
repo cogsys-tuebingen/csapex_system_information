@@ -32,7 +32,6 @@ private:
     system_information::system_info::Ptr system_info_;
 
 
-
 };
 }
 

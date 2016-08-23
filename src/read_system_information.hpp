@@ -69,7 +69,10 @@ public:
         meminfo_("/proc/meminfo"),
         reg_cpu_("(cpu)([0-9]*)"),
         reg_mem_total_("MemTotal.*"),
-        reg_mem_available_("MemAvailable.*")
+        reg_mem_available_("MemAvailable.*"),
+        reg_mem_buffers_("Buffers.*"),
+        reg_mem_cached_("Cached.*"),
+        reg_mem_free_("MemFree.*")
     {
         if(!stat_.is_open())
             throw std::runtime_error("Cannot open '/proc/stat'!");
@@ -119,6 +122,9 @@ private:
     boost::regex             reg_cpu_;
     boost::regex             reg_mem_total_;
     boost::regex             reg_mem_available_;
+    boost::regex             reg_mem_buffers_;
+    boost::regex             reg_mem_cached_;
+    boost::regex             reg_mem_free_;
 
     void updateCPUInfo()
     {
@@ -131,8 +137,11 @@ private:
         meminfo_.clear();
         meminfo_.seekg(0, std::ios::beg);
         std::string line;
-        std::size_t total_ram(0);
-        std::size_t available_ram(0);
+        std::size_t mem_total(0);
+        std::size_t mem_available(0);
+        std::size_t mem_buffers(0);
+        std::size_t mem_cached(0);
+        std::size_t mem_free(0);
         while(std::getline(meminfo_, line)) {
             std::vector<std::string> tokens;
             split(line, ' ', tokens);
@@ -141,17 +150,32 @@ private:
             }
 
             if(boost::regex_match(tokens[0], reg_mem_total_)) {
-                total_ram = as<std::size_t>(tokens[1]);
+                mem_total = as<std::size_t>(tokens[1]);
             } else if(boost::regex_match(tokens[0], reg_mem_available_)) {
-                available_ram = as<std::size_t>(tokens[1]);
+                mem_available = as<std::size_t>(tokens[1]);
+            } else if(boost::regex_match(tokens[0], reg_mem_buffers_)) {
+                mem_buffers = as<std::size_t>(tokens[1]);
+            } else if(boost::regex_match(tokens[0], reg_mem_cached_)) {
+                mem_cached = as<std::size_t>(tokens[1]);
+            } else if(boost::regex_match(tokens[0], reg_mem_free_)) {
+                mem_free = as<std::size_t>(tokens[1]);
             }
-            if(total_ram != 0 &&
-                    available_ram != 0)
+            if(mem_total != 0 &&
+                    (mem_available != 0 ||
+                        (mem_buffers != 0 && mem_cached != 0 && mem_free != 0)))
                 break;
         }
-        ram_.available = available_ram;
-        ram_.total = total_ram;
-        ram_.used = total_ram - available_ram;
+
+        if(mem_available != 0) {
+            ram_.available = mem_available;
+            ram_.total = mem_total;
+            ram_.used = mem_total - mem_available;
+        } else {
+            ram_.available = mem_buffers + mem_cached + mem_free;
+            ram_.total = mem_total;
+            ram_.used = mem_total - ram_.available;
+        }
+
     }
 
     void readCPUInfo(std::map<std::string, cpu_info> &infos)
