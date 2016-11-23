@@ -9,7 +9,7 @@ find_package(Boost REQUIRED COMPONENTS regex)
 
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES csapex_system_information
+#  LIBRARIES ${PROJECT_NAME}
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -25,11 +25,11 @@ file(GLOB sources
     src/*.h
 )
 
-add_library(csapex_system_information
+add_library(${PROJECT_NAME}
     ${sources}
 )
 
-target_link_libraries(csapex_system_information
+target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
 )
@@ -41,7 +41,7 @@ target_link_libraries(csapex_system_information
 install(FILES plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-install(TARGETS csapex_system_information
+install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
