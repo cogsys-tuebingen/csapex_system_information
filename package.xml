@@ -5,6 +5,8 @@
   <description>
     The csapex_system_information allows to read system information such as cpu
     and memory usage within csapex.
+    This might come in useful if you want to keep track of rough system resource
+    usage executing tasks within apex.
   </description>
 
   <maintainer email="richard.hanten@todo.todo">hanten</maintainer>
