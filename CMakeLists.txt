@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(csapex_system_information)
 
 find_package(catkin REQUIRED COMPONENTS
-    csapex
-    csapex_core_plugins)
+    csapex)
 
 find_package(Boost REQUIRED COMPONENTS regex)
 

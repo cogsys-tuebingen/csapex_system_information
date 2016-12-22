@@ -14,10 +14,8 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>csapex</run_depend>
-  <run_depend>csapex_core_plugins</run_depend>
 
   <build_depend>csapex</build_depend>
-  <build_depend>csapex_core_plugins</build_depend>
 
   <export>
     <csapex plugin="${prefix}/plugins.xml" />
