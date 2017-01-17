@@ -2,14 +2,15 @@
 #define SYSTEMUSAGE_H
 
 /// PROJECT
-#include <csapex/model/tickable_node.h>
+#include <csapex/nodes/note.h>
+#include <csapex/utility/ticker.h>
 #include <csapex/model/connector_type.h>
 #include <csapex/param/output_progress_parameter.h>
 #include <chrono>
 #include "read_system_information.hpp"
 
 namespace csapex {
-class SystemUsage : public csapex::TickableNode
+class SystemUsage : public csapex::Node, public Ticker
 {
 public:
     SystemUsage();
@@ -17,9 +18,10 @@ public:
     virtual void setup(NodeModifier &node_modifier) override;
     virtual void setupParameters(Parameterizable &parameters) override;
     virtual void process() override;
-    virtual void tick() override;
 
 private:
+    virtual void tickEvent() override;
+
     using clock         = std::chrono::system_clock;
     using time_point    = clock::time_point;
     using ms            = std::chrono::duration<double, std::milli>;

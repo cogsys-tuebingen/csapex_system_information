@@ -61,14 +61,14 @@ void SystemUsage::setupParameters(Parameterizable &parameters)
                                                                    0.01, 10.0, 0.5, 0.01),
                             update_interval_);
 
-
+    startTickThread();
 }
 
 void SystemUsage::process()
 {
 }
 
-void SystemUsage::tick()
+void SystemUsage::tickEvent()
 {
     if(clock::now() > (last_update_ + ms(update_interval_ * 1000.0))) {
         std::map<std::string, double> loads;
